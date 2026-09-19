@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, CheckCircle2 } from 'lucide-react';
+import { Mail, CheckCircle2, ExternalLink } from 'lucide-react';
 import { AuthLayout } from '../components/auth/AuthLayout';
 import { useAuth } from '../context/AuthContext';
 import { useSubSentry } from '../context/SubSentryContext';
@@ -9,6 +9,24 @@ function maskEmail(email: string): string {
   const [local, domain] = email.split('@');
   if (local.length <= 2) return `${local[0]}***@${domain}`;
   return `${local[0]}***${local[local.length - 1]}@${domain}`;
+}
+
+function getWebmailProvider(email: string): { label: string; url: string } {
+  const domain = email.split('@')[1]?.toLowerCase() || '';
+  if (domain.includes('gmail') || domain.includes('googlemail')) {
+    return { label: 'Open Gmail', url: 'https://mail.google.com' };
+  }
+  if (domain.includes('outlook') || domain.includes('hotmail') || domain.includes('live')) {
+    return { label: 'Open Outlook', url: 'https://outlook.live.com/mail/' };
+  }
+  if (domain.includes('yahoo')) {
+    return { label: 'Open Yahoo Mail', url: 'https://mail.yahoo.com' };
+  }
+  if (domain.includes('icloud')) {
+    return { label: 'Open iCloud Mail', url: 'https://www.icloud.com/mail' };
+  }
+  // Default to Gmail for webmail users
+  return { label: 'Open Gmail', url: 'https://mail.google.com' };
 }
 
 export const VerifyEmailPage: React.FC = () => {
@@ -21,6 +39,7 @@ export const VerifyEmailPage: React.FC = () => {
 
   const displayEmail = pendingVerificationEmail || pendingVerificationUser?.email || 'your email';
   const maskedEmail = maskEmail(displayEmail);
+  const provider = getWebmailProvider(displayEmail);
 
   const handleResend = () => {
     setIsResending(true);
@@ -89,11 +108,23 @@ export const VerifyEmailPage: React.FC = () => {
         </button>
 
         <a
-          href={`mailto:${displayEmail}`}
-          className="block w-full py-2 px-4 text-center border border-border text-xs font-medium text-primary hover:bg-surface-subtle rounded-md transition-colors"
+          href={provider.url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-1.5 w-full py-2.5 px-4 text-center border border-border text-xs font-medium text-primary hover:bg-surface-subtle rounded-md transition-colors"
         >
-          Open email
+          <ExternalLink className="w-3.5 h-3.5 text-secondary" />
+          <span>{provider.label}</span>
         </a>
+
+        <div className="text-center pt-1">
+          <a
+            href={`mailto:${displayEmail}`}
+            className="text-[11px] text-muted hover:text-secondary transition-colors underline-offset-2 hover:underline"
+          >
+            Or open system mail app
+          </a>
+        </div>
 
         <div className="pt-2 flex items-center justify-between text-xs text-secondary">
           <button

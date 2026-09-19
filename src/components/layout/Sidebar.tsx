@@ -156,9 +156,7 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({
 
         {/* Authenticated User Area in Sidebar */}
         <div className="p-3 border-t border-border/70 bg-surface-subtle/30">
-          <div className="flex items-center justify-between">
-            <UserMenu compact={false} />
-          </div>
+          <UserMenu direction="up" fullWidth={true} />
           <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted">
             <span>Transaction history</span>
             <span className="font-mono text-secondary tabular-nums">
