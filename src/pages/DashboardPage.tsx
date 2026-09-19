@@ -25,7 +25,7 @@ export const DashboardPage: React.FC = () => {
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'subsentry_sample_transactions.csv');
+    link.setAttribute('download', 'subsentry_statement_template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);

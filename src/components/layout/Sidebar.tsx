@@ -13,6 +13,7 @@ import {
   Info,
 } from 'lucide-react';
 import { useSubSentry } from '../../context/SubSentryContext';
+import { UserMenu } from '../auth/UserMenu';
 import { PageRoute } from '../../types';
 
 interface NavItem {
@@ -153,18 +154,16 @@ export const Sidebar: React.FC<{ isOpen?: boolean; onClose?: () => void }> = ({
           {renderNavGroup('System', systemItems)}
         </div>
 
-        {/* Bottom Data Status Section */}
-        <div className="p-4 border-t border-border/70 bg-surface-subtle/40">
-          <div className="text-xs font-semibold text-primary">
-            Transaction history
+        {/* Authenticated User Area in Sidebar */}
+        <div className="p-3 border-t border-border/70 bg-surface-subtle/30">
+          <div className="flex items-center justify-between">
+            <UserMenu compact={false} />
           </div>
-          <div className="text-xs text-secondary mt-0.5 tabular-nums">
-            {totalTransactionsCount > 0
-              ? `${totalTransactionsCount} transactions`
-              : 'No transactions'}
-          </div>
-          <div className="text-[10px] text-muted mt-1">
-            Last analyzed: {totalTransactionsCount > 0 ? 'Today, 10:42 AM' : 'None'}
+          <div className="mt-2 pt-2 border-t border-border/50 flex items-center justify-between text-[11px] text-muted">
+            <span>Transaction history</span>
+            <span className="font-mono text-secondary tabular-nums">
+              {totalTransactionsCount > 0 ? `${totalTransactionsCount} txs` : 'Empty'}
+            </span>
           </div>
         </div>
       </aside>

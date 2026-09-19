@@ -78,6 +78,25 @@ export interface MerchantNormalizationSummary {
   confidence: number;
 }
 
+export interface User {
+  id: string;
+  name: string;
+  email: string;
+  emailVerified: boolean;
+  createdAt: string;
+  passwordHash: string;
+  salt: string;
+  resetToken?: string;
+  resetTokenExpires?: number;
+  verificationToken?: string;
+}
+
+export interface Session {
+  token: string;
+  userId: string;
+  expiresAt: number;
+}
+
 export type PageRoute = 
   | "/"
   | "/transactions"
@@ -89,4 +108,11 @@ export type PageRoute =
   | "/datasets"
   | "/report"
   | "/settings"
-  | "/about";
+  | "/about"
+  | "/signin"
+  | "/signup"
+  | "/forgot-password"
+  | "/reset-password"
+  | "/verify-email"
+  | "/privacy"
+  | "/terms";

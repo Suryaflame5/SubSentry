@@ -104,7 +104,7 @@ export const ImportDropzone: React.FC<ImportDropzoneProps> = ({ onStartProcessin
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;
-    link.setAttribute('download', 'subsentry_sample_transactions.csv');
+    link.setAttribute('download', 'subsentry_statement_template.csv');
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
@@ -158,7 +158,7 @@ export const ImportDropzone: React.FC<ImportDropzoneProps> = ({ onStartProcessin
             </button>
           </div>
 
-          {/* Sample records preview */}
+          {/* Statement records preview */}
           <div className="space-y-1.5 pt-2 border-t border-border/70">
             <div className="text-[10px] text-secondary uppercase font-semibold">
               First {selectedFileMeta.preview.length} records preview

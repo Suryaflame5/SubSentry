@@ -1,6 +1,7 @@
 import React from 'react';
 import { Menu, Search, Upload } from 'lucide-react';
 import { useSubSentry } from '../../context/SubSentryContext';
+import { UserMenu } from '../auth/UserMenu';
 import { PageRoute } from '../../types';
 
 interface TopBarProps {
@@ -138,6 +139,11 @@ export const TopBar: React.FC<TopBarProps> = ({ onMenuToggle }) => {
           <Upload className="w-3.5 h-3.5" />
           <span>Import data</span>
         </button>
+
+        {/* Authenticated User Menu */}
+        <div className="border-l border-border/80 pl-2 sm:pl-3">
+          <UserMenu compact={false} />
+        </div>
       </div>
     </header>
   );

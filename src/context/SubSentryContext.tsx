@@ -10,6 +10,8 @@ import {
 } from '../data/syntheticDataset';
 import { analyzeTransactions } from '../utils/recurrenceEngine';
 
+import { useAuth } from './AuthContext';
+
 interface ToastData {
   id: string;
   title: string;
@@ -54,27 +56,38 @@ interface SubSentryContextType {
 
 const SubSentryContext = createContext<SubSentryContextType | undefined>(undefined);
 
-const STORAGE_KEY_PREFIX = 'subsentry_v1_';
+const ALL_VALID_ROUTES: PageRoute[] = [
+  '/',
+  '/transactions',
+  '/recurring',
+  '/review',
+  '/insights',
+  '/merchants',
+  '/import',
+  '/datasets',
+  '/report',
+  '/settings',
+  '/about',
+  '/signin',
+  '/signup',
+  '/forgot-password',
+  '/reset-password',
+  '/verify-email',
+  '/privacy',
+  '/terms',
+];
+
+function parseHashRoute(): PageRoute {
+  const raw = window.location.hash.replace('#', '') || '/';
+  const clean = raw.split('?')[0] as PageRoute;
+  return ALL_VALID_ROUTES.includes(clean) ? clean : '/';
+}
 
 export const SubSentryProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { user } = useAuth();
+
   // Navigation
-  const [currentRoute, setCurrentRouteState] = useState<PageRoute>(() => {
-    const hash = window.location.hash.replace('#', '') as PageRoute;
-    const validRoutes: PageRoute[] = [
-      '/',
-      '/transactions',
-      '/recurring',
-      '/review',
-      '/insights',
-      '/merchants',
-      '/import',
-      '/datasets',
-      '/report',
-      '/settings',
-      '/about',
-    ];
-    return validRoutes.includes(hash) ? hash : '/';
-  });
+  const [currentRoute, setCurrentRouteState] = useState<PageRoute>(() => parseHashRoute());
 
   const setCurrentRoute = (route: PageRoute) => {
     setCurrentRouteState(route);
@@ -84,43 +97,69 @@ export const SubSentryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   useEffect(() => {
     const handleHashChange = () => {
-      const hash = window.location.hash.replace('#', '') as PageRoute;
-      const validRoutes: PageRoute[] = [
-        '/',
-        '/transactions',
-        '/recurring',
-        '/review',
-        '/insights',
-        '/merchants',
-        '/import',
-        '/datasets',
-        '/report',
-        '/settings',
-        '/about',
-      ];
-      if (validRoutes.includes(hash)) {
-        setCurrentRouteState(hash);
-      }
+      const parsed = parseHashRoute();
+      setCurrentRouteState(parsed);
     };
     window.addEventListener('hashchange', handleHashChange);
     return () => window.removeEventListener('hashchange', handleHashChange);
   }, []);
 
-  // Data States (Boots empty unless a dataset has been imported / saved)
+  // Data States scoped by user identifier
   const [transactions, setTransactions] = useState<Transaction[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}transactions`);
-    return saved ? JSON.parse(saved) : [];
+    if (!user) return [];
+    try {
+      const saved = localStorage.getItem(`subsentry:user:${user.id}:transactions`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [recurringPayments, setRecurringPayments] = useState<RecurringPayment[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}recurring`);
-    return saved ? JSON.parse(saved) : [];
+    if (!user) return [];
+    try {
+      const saved = localStorage.getItem(`subsentry:user:${user.id}:recurring`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
   const [reviewCandidates, setReviewCandidates] = useState<ReviewCandidate[]>(() => {
-    const saved = localStorage.getItem(`${STORAGE_KEY_PREFIX}candidates`);
-    return saved ? JSON.parse(saved) : [];
+    if (!user) return [];
+    try {
+      const saved = localStorage.getItem(`subsentry:user:${user.id}:candidates`);
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
+
+  // Reload user data whenever active user changes
+  useEffect(() => {
+    if (!user) {
+      setTransactions([]);
+      setRecurringPayments([]);
+      setReviewCandidates([]);
+      setSelectedEvidenceMerchant(null);
+      setSelectedTransaction(null);
+      return;
+    }
+
+    try {
+      const savedTx = localStorage.getItem(`subsentry:user:${user.id}:transactions`);
+      const savedRec = localStorage.getItem(`subsentry:user:${user.id}:recurring`);
+      const savedCand = localStorage.getItem(`subsentry:user:${user.id}:candidates`);
+
+      setTransactions(savedTx ? JSON.parse(savedTx) : []);
+      setRecurringPayments(savedRec ? JSON.parse(savedRec) : []);
+      setReviewCandidates(savedCand ? JSON.parse(savedCand) : []);
+    } catch {
+      setTransactions([]);
+      setRecurringPayments([]);
+      setReviewCandidates([]);
+    }
+  }, [user?.id]);
 
   // Evidence Drawer & Details
   const [selectedEvidenceMerchant, setSelectedEvidenceMerchant] = useState<RecurringPayment | null>(null);
@@ -128,18 +167,24 @@ export const SubSentryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const [isSearchOpen, setIsSearchOpen] = useState(false);
   const [toast, setToast] = useState<ToastData | null>(null);
 
-  // Sync to localStorage
+  // Sync to user-scoped localStorage
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}transactions`, JSON.stringify(transactions));
-  }, [transactions]);
+    if (user) {
+      localStorage.setItem(`subsentry:user:${user.id}:transactions`, JSON.stringify(transactions));
+    }
+  }, [transactions, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}recurring`, JSON.stringify(recurringPayments));
-  }, [recurringPayments]);
+    if (user) {
+      localStorage.setItem(`subsentry:user:${user.id}:recurring`, JSON.stringify(recurringPayments));
+    }
+  }, [recurringPayments, user?.id]);
 
   useEffect(() => {
-    localStorage.setItem(`${STORAGE_KEY_PREFIX}candidates`, JSON.stringify(reviewCandidates));
-  }, [reviewCandidates]);
+    if (user) {
+      localStorage.setItem(`subsentry:user:${user.id}:candidates`, JSON.stringify(reviewCandidates));
+    }
+  }, [reviewCandidates, user?.id]);
 
   // Global keyboard shortcuts (Ctrl+K, Cmd+K, /)
   useEffect(() => {
@@ -273,9 +318,11 @@ export const SubSentryProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     setReviewCandidates([]);
     setSelectedEvidenceMerchant(null);
     setSelectedTransaction(null);
-    localStorage.removeItem(`${STORAGE_KEY_PREFIX}transactions`);
-    localStorage.removeItem(`${STORAGE_KEY_PREFIX}recurring`);
-    localStorage.removeItem(`${STORAGE_KEY_PREFIX}candidates`);
+    if (user) {
+      localStorage.removeItem(`subsentry:user:${user.id}:transactions`);
+      localStorage.removeItem(`subsentry:user:${user.id}:recurring`);
+      localStorage.removeItem(`subsentry:user:${user.id}:candidates`);
+    }
     showToast('Transaction history cleared.', undefined, 'info');
   };
 
